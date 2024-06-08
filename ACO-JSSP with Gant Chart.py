@@ -8,6 +8,11 @@ class ElectricalConstructionScheduler:
         self.root = root
         self.root.title("Electrical Construction Scheduler")
         self.projects = {}
+        self.task_order = [
+            "Checking Site", "Ordering Material (Temp Materials)", "Layouting", "Roughing Ins",
+            "Hanger Support", "Wiring Support", "Devices", "Testing", "Termination", "(Civil)",
+            "Load Test", "Commissioning", "Turn Over"
+        ]
         
         self.create_widgets()
 
@@ -16,49 +21,51 @@ class ElectricalConstructionScheduler:
         frame = ttk.Frame(self.root, padding="10")
         frame.grid(row=0, column=0, padx=10, pady=10)
 
-        add_project_button = ttk.Button(frame, text="Add Site", command=self.add_project)
-        add_project_button.grid(row=0, column=0, pady=5)
+        # Widgets for main window
+        site_label = ttk.Label(frame, text="SITE NAME:")
+        site_label.grid(row=0, column=0, padx=5, pady=5, sticky=tk.E)
+        self.site_entry = ttk.Entry(frame)
+        self.site_entry.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
 
-        calculate_schedule_button = ttk.Button(frame, text="Calculate Schedule", command=self.calculate_schedule)
-        calculate_schedule_button.grid(row=1, column=0, pady=5)
-
-    def add_project(self):
-        self.project_window = tk.Toplevel(self.root)
-        self.project_window.title("Add Site and Task")
-
-        site_label = ttk.Label(self.project_window, text="Site Name:")
-        site_label.grid(row=0, column=0, padx=5, pady=5)
-        self.site_entry = ttk.Entry(self.project_window)
-        self.site_entry.grid(row=0, column=1, padx=5, pady=5)
-
-        team_label = ttk.Label(self.project_window, text="Team Name:")
-        team_label.grid(row=1, column=0, padx=5, pady=5)
+        team_label = ttk.Label(frame, text="TEAM NAME:")
+        team_label.grid(row=1, column=0, padx=5, pady=5, sticky=tk.E)
         team_options = ["Team Engineering", "Foreman", "Electrician", "Labor", "Civil"]
         self.team_var = tk.StringVar()
-        self.team_combobox = ttk.Combobox(self.project_window, textvariable=self.team_var, values=team_options, state='readonly')
-        self.team_combobox.grid(row=1, column=1, padx=5, pady=5)
+        self.team_combobox = ttk.Combobox(frame, textvariable=self.team_var, values=team_options, state='readonly')
+        self.team_combobox.grid(row=1, column=1, padx=5, pady=5, sticky=tk.W)
 
-        activity_label = ttk.Label(self.project_window, text="Activity/Job:")
-        activity_label.grid(row=2, column=0, padx=5, pady=5)
-        activity_options = [
-            "Checking Site", "Ordering Material (Temp Materials)", "Layouting", "Roughing Ins",
-            "Hanger Support", "Wiring Support", "Devices", "Testing", "Termination", "(Civil)",
-            "Load Test", "Commissioning", "Turn Over"
-        ]
+        activity_label = ttk.Label(frame, text="ACTIVITY/JOB:")
+        activity_label.grid(row=2, column=0, padx=5, pady=5, sticky=tk.E)
+        activity_options = self.task_order
         self.activity_var = tk.StringVar()
-        self.activity_combobox = ttk.Combobox(self.project_window, textvariable=self.activity_var, values=activity_options, state='readonly')
-        self.activity_combobox.grid(row=2, column=1, padx=5, pady=5)
+        self.activity_combobox = ttk.Combobox(frame, textvariable=self.activity_var, values=activity_options, state='readonly')
+        self.activity_combobox.grid(row=2, column=1, padx=5, pady=5, sticky=tk.W)
 
-        duration_label = ttk.Label(self.project_window, text="Duration (Days):")
-        duration_label.grid(row=3, column=0, padx=5, pady=5)
-        self.duration_entry = ttk.Entry(self.project_window)
-        self.duration_entry.grid(row=3, column=1, padx=5, pady=5)
+        duration_label = ttk.Label(frame, text="DURATION (HOURS):")
+        duration_label.grid(row=3, column=0, padx=5, pady=5, sticky=tk.E)
+        self.duration_entry = ttk.Entry(frame)
+        self.duration_entry.grid(row=3, column=1, padx=5, pady=5, sticky=tk.W)
 
-        add_task_button = ttk.Button(self.project_window, text="Add Task", command=self.add_task)
-        add_task_button.grid(row=4, column=0, columnspan=2, pady=5)
+        add_task_button = ttk.Button(frame, text="ADD TASK", command=self.add_task)
+        add_task_button.grid(row=4, column=0, padx=5, pady=5, sticky=tk.E)
 
-        save_project_button = ttk.Button(self.project_window, text="Save Site", command=self.save_project)
-        save_project_button.grid(row=5, column=0, columnspan=2, pady=5)
+        add_site_button = ttk.Button(frame, text="ADD SITE", command=self.save_project)
+        add_site_button.grid(row=4, column=1, padx=5, pady=5, sticky=tk.W)
+
+        # Table for displaying tasks
+        self.task_table = ttk.Treeview(frame, columns=("site", "team", "activity", "duration"), show="headings", height=10)
+        self.task_table.heading("site", text="SITE")
+        self.task_table.heading("team", text="TEAM")
+        self.task_table.heading("activity", text="ACTIVITY/JOB")
+        self.task_table.heading("duration", text="TIME DURATION")
+        self.task_table.column("site", width=150)
+        self.task_table.column("team", width=150)
+        self.task_table.column("activity", width=150)
+        self.task_table.column("duration", width=100)
+        self.task_table.grid(row=5, column=0, columnspan=2, padx=5, pady=5)
+
+        calculate_schedule_button = ttk.Button(frame, text="Calculate Schedule", command=self.calculate_schedule)
+        calculate_schedule_button.grid(row=6, column=0, columnspan=2, pady=5)
 
         self.tasks = []
 
@@ -81,6 +88,16 @@ class ElectricalConstructionScheduler:
         self.activity_combobox.set("")
         self.duration_entry.delete(0, tk.END)
 
+        self.update_task_table()
+
+    def update_task_table(self):
+        self.task_table.delete(*self.task_table.get_children())
+        for site, tasks in self.projects.items():
+            for task in tasks:
+                self.task_table.insert("", tk.END, values=(site, task[0], task[1], task[2]))
+        for task in self.tasks:
+            self.task_table.insert("", tk.END, values=("", task[0], task[1], task[2]))
+
     def save_project(self):
         site_name = self.site_entry.get()
         if not site_name:
@@ -91,8 +108,10 @@ class ElectricalConstructionScheduler:
             messagebox.showerror("Input Error", "Site name already exists.")
             return
 
-        self.projects[site_name] = self.tasks
-        self.project_window.destroy()
+        self.projects[site_name] = self.tasks.copy()
+        self.tasks.clear()
+        self.update_task_table()
+        self.site_entry.delete(0, tk.END)
 
     def calculate_schedule(self):
         if not self.projects:
@@ -102,8 +121,9 @@ class ElectricalConstructionScheduler:
         jobs = []
         tasks = []
         for site, task_list in self.projects.items():
-            jobs.append([(team, duration) for team, activity, duration in task_list])
-            tasks.append([(team, activity) for team, activity, duration in task_list])
+            sorted_task_list = sorted(task_list, key=lambda x: self.task_order.index(x[1]))
+            jobs.append([(team, duration) for team, activity, duration in sorted_task_list])
+            tasks.append([(team, activity) for team, activity, duration in sorted_task_list])
 
         best_solution, best_makespan = self.schedule_jobs(jobs, tasks)
 
@@ -166,6 +186,14 @@ class ElectricalConstructionScheduler:
                 probabilities = np.array(heuristic_info) / np.sum(heuristic_info)
                 selected_index = np.random.choice(len(available_tasks), p=probabilities)
                 selected_job, selected_task = available_tasks[selected_index]
+
+                # Enforce task sequence order
+                if selected_task > 0:
+                    prev_task = tasks[selected_job][selected_task - 1][1]
+                    current_task = tasks[selected_job][selected_task][1]
+                    if self.task_order.index(current_task) < self.task_order.index(prev_task):
+                        continue
+
                 solution.append((selected_job, selected_task))
                 remaining_tasks.remove((selected_job, selected_task))
                 machine_times[team_name_to_index[jobs[selected_job][selected_task][0]]] += jobs[selected_job][selected_task][1]
@@ -192,7 +220,7 @@ class ElectricalConstructionScheduler:
         return best_solution, best_makespan
 
     def generate_gantt_chart(self, solution, jobs, tasks):
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(12, 6))
         fig.patch.set_facecolor('#2e2e2e')
         ax.set_facecolor('#2e2e2e')
 
@@ -212,7 +240,7 @@ class ElectricalConstructionScheduler:
             end_time = start_time + duration
             activity = tasks[job][task][1]
             ax.broken_barh([(start_time, duration)], (machine * 10, 9), facecolors=(colors[job]), edgecolor='white')
-            ax.text(start_time + duration / 2, machine * 10 + 4.5, f'{activity}', ha='center', va='center', color='white')
+            ax.text(start_time + duration / 2, machine * 10 + 4.5, f'{activity}', ha='center', va='center', color='white', fontsize=8)
             machine_times[machine] = end_time
             task_end_times[(job, task)] = end_time
 
@@ -228,6 +256,8 @@ class ElectricalConstructionScheduler:
         ax.grid(True, color='gray')
         ax.tick_params(axis='x', colors='white')
         ax.tick_params(axis='y', colors='white')
+
+        plt.tight_layout()
         plt.show()
 
 

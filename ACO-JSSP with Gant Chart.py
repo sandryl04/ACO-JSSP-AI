@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 
 class ElectricalConstructionScheduler:
     def __init__(self, root):
@@ -240,16 +241,22 @@ class ElectricalConstructionScheduler:
             end_time = start_time + duration
             activity = tasks[job][task][1]
             ax.broken_barh([(start_time, duration)], (machine * 10, 9), facecolors=(colors[job]), edgecolor='white')
-            ax.text(start_time + duration / 2, machine * 10 + 4.5, f'{activity}', ha='center', va='center', color='white', fontsize=8)
+            ax.text(start_time + duration / 2, machine * 10 + 4.5, f'{activity[:10]}', ha='center', va='center', color='white', fontsize=8)
             machine_times[machine] = end_time
             task_end_times[(job, task)] = end_time
 
-        # Add legend
-        handles = [plt.Rectangle((0, 0), 1, 1, color=colors[i]) for i in range(len(jobs))]
-        labels = [site for site in self.projects.keys()]
-        ax.legend(handles, labels, loc='upper left', facecolor='#2e2e2e', edgecolor='white', fontsize='small')
+        # Convert x-axis labels from hours to days
+        ax.set_xticks(np.arange(0, max(machine_times) + 8, 8))
+        ax.set_xticklabels([f'Day {i + 1}' for i in range(len(ax.get_xticks()))], color='white')
 
-        ax.set_xlabel('Time (hours)', color='white')
+        # Add legend
+        handles = [Patch(facecolor=colors[i], edgecolor='white') for i in range(len(jobs))]
+        labels = [site for site in self.projects.keys()]
+        legend = ax.legend(handles, labels, loc='upper left', facecolor='#2e2e2e', edgecolor='white', fontsize='small')
+        for text in legend.get_texts():
+            text.set_color('white')
+
+        ax.set_xlabel('Time', color='white')
         ax.set_ylabel('Teams', color='white')
         ax.set_yticks([i * 10 + 4.5 for i in range(num_machines)])
         ax.set_yticklabels(team_names, color='white')

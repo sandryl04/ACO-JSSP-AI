@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
@@ -267,6 +267,18 @@ class ElectricalConstructionScheduler:
         plt.tight_layout()
         plt.show()
 
+        # Save the chart
+        save_path = self.get_save_path()
+        if save_path:
+            fig.savefig(save_path)
+            messagebox.showinfo("Save Successful", f"Gantt chart saved to {save_path}")
+
+    def get_save_path(self):
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".png",
+            filetypes=[("PNG files", "*.png"), ("All files", "*.*")]
+        )
+        return file_path
 
 if __name__ == "__main__":
     root = tk.Tk()
